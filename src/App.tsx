@@ -1,10 +1,16 @@
 import './App.css';
-import { AppShell, NavLink, Title } from '@mantine/core';
+import { AppShell, Button, NavLink, Title } from '@mantine/core';
 // import { useDisclosure } from '@mantine/hooks';
-import { Link, Outlet } from 'react-router';
+import { Link, Outlet, useNavigate } from 'react-router';
+import { supabase } from './lib/supabase';
 
 function App() {
+  const navigate = useNavigate();
   // const [opened, { toggle }] = useDisclosure();
+  async function logOut(): Promise<void> {
+    await supabase.auth.signOut();
+    navigate('/');
+  }
   return (
     <AppShell
       padding='md'
@@ -26,6 +32,7 @@ function App() {
         <NavLink component={Link} to='/' label='Events' />
         <NavLink component={Link} to='/restaurants' label='Restaurants' />
         <NavLink component={Link} to='/deals' label='Deals' />
+        <Button onClick={logOut}>Log Out</Button>
       </AppShell.Navbar>
       <AppShell.Main>
         <Outlet />

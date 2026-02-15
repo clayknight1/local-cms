@@ -5,7 +5,7 @@ import 'mantine-datatable/styles.layer.css';
 import './index.css';
 import App from './App.tsx';
 import { MantineProvider } from '@mantine/core';
-import { createBrowserRouter, RouterProvider } from 'react-router';
+import { createBrowserRouter, redirect, RouterProvider } from 'react-router';
 import Events from './pages/events/events.tsx';
 import Restaurants from './pages/restaurants/restaurants.tsx';
 import Deals from './pages/deals/deals.tsx';
@@ -17,11 +17,26 @@ import Restaurant from './pages/restaurant/restaurant.tsx';
 import { getDeals } from './services/deals.service.ts';
 import { getEventById, getEvents } from './services/events.service.ts';
 import Event from './pages/event/event.tsx';
+import Login from './pages/login/login.tsx';
+import { supabase } from './lib/supabase.ts';
 
 const router = createBrowserRouter([
   {
+    path: '/login',
+    Component: Login,
+  },
+  {
     path: '/',
     Component: App,
+    loader: async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        throw redirect('/login');
+        return null;
+      }
+    },
     children: [
       {
         index: true,
