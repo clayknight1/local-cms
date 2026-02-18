@@ -1,48 +1,104 @@
+import { useForm } from '@mantine/form';
+import { useEffect } from 'react';
+import QueryState from './QueryState';
 import {
-  TextInput,
-  Textarea,
-  NumberInput,
-  Switch,
   Button,
   Group,
+  NumberInput,
   Stack,
+  Switch,
+  Textarea,
+  TextInput,
 } from '@mantine/core';
-import { useForm } from '@mantine/form';
-import { useLoaderData } from 'react-router';
+import type { Business } from '../types';
 
-export default function Restaurant() {
-  const { restaurant } = useLoaderData();
+export type RestaurantFormValues = {
+  name: string;
+  description: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone: string;
+  email: string;
+  website_url: string;
+  business_type: string;
+  price_range: string;
+  latitude: number;
+  longitude: number;
+  is_active: boolean;
+  logo_url: string;
+  cover_image_url: string;
+};
+
+type RestaurantFormProps = {
+  restaurant?: Business | null;
+  isError?: boolean;
+  isPending?: boolean;
+  error?: Error | null;
+  onSubmit: (values: RestaurantFormValues) => void;
+};
+
+export default function RestaurantForm({
+  restaurant,
+  isError = false,
+  isPending = false,
+  error = null,
+  onSubmit,
+}: RestaurantFormProps) {
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      name: restaurant?.name || '',
-      description: restaurant?.description || '',
-      address: restaurant?.address || '',
-      city: restaurant?.city || '',
-      state: restaurant?.state || '',
-      zip: restaurant?.zip || '',
-      phone: restaurant?.phone || '',
-      email: restaurant?.email || '',
-      website_url: restaurant?.website_url || '',
-      business_type: restaurant?.business_type || '',
-      price_range: restaurant?.price_range || '',
-      latitude: restaurant?.latitude || 0,
-      longitude: restaurant?.longitude || 0,
-      is_active: restaurant?.is_active ?? true,
-      logo_url: restaurant?.logo_url || '',
-      cover_image_url: restaurant?.cover_image_url || '',
+      name: '',
+      description: '',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      phone: '',
+      email: '',
+      website_url: '',
+      business_type: '',
+      price_range: '',
+      latitude: 0,
+      longitude: 0,
+      is_active: true,
+      logo_url: '',
+      cover_image_url: '',
     },
   });
 
-  const handleSubmit = (values: typeof form.values) => {
-    console.log('Form values:', values);
-    // TODO: Submit to Supabase
-  };
+  useEffect(() => {
+    if (restaurant) {
+      form.setValues({
+        name: restaurant?.name || '',
+        description: restaurant?.description || '',
+        address: restaurant?.address || '',
+        city: restaurant?.city || '',
+        state: restaurant?.state || '',
+        zip: restaurant?.zip || '',
+        phone: restaurant?.phone || '',
+        email: restaurant?.email || '',
+        website_url: restaurant?.website_url || '',
+        business_type: restaurant?.business_type || '',
+        price_range: restaurant?.price_range || '',
+        latitude: restaurant?.latitude || 0,
+        longitude: restaurant?.longitude || 0,
+        is_active: restaurant?.is_active ?? true,
+        logo_url: restaurant?.logo_url || '',
+        cover_image_url: restaurant?.cover_image_url || '',
+      });
+    }
+  }, [restaurant]);
+
+  if (isError || isPending) {
+    return <QueryState isError={isError} isPending={isPending} error={error} />;
+  }
 
   return (
     <>
       <h1>{restaurant?.name || 'New Business'}</h1>
-      <form onSubmit={form.onSubmit(handleSubmit)}>
+      <form onSubmit={form.onSubmit(onSubmit)}>
         <Stack gap='md'>
           <TextInput
             {...form.getInputProps('name')}
@@ -166,7 +222,9 @@ export default function Restaurant() {
           />
 
           <Group justify='flex-end' mt='md'>
-            <Button type='submit'>Save</Button>
+            <Button type='submit' disabled={!form.isDirty()}>
+              Save
+            </Button>
           </Group>
         </Stack>
       </form>

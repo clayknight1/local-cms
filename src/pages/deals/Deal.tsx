@@ -9,14 +9,47 @@ import {
 } from '@mantine/core';
 import { DateTimePicker } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useLoaderData } from 'react-router';
 import type { Business } from '../../types';
+import { useQuery } from '@tanstack/react-query';
+import { getDealById } from '../../services/deals.service';
+import { getBusinesses } from '../../services/businesses.service';
+import { useEffect } from 'react';
+import { useParams } from 'react-router';
+import QueryState from '../../components/QueryState';
 
 export default function Deal() {
-  const { deal, businesses } = useLoaderData();
+  const { id } = useParams();
+  const {
+    isPending,
+    isError,
+    data: deal,
+    error,
+  } = useQuery({ queryKey: ['deal'], queryFn: () => getDealById(Number(id)) });
+  const { data: businesses } = useQuery({
+    queryKey: ['businesses'],
+    queryFn: getBusinesses,
+  });
+
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
+      deal_title: '',
+      deal_description: '',
+      terms: deal?.terms || '',
+      business_id: '',
+      starts_at: new Date(),
+      expires_at: new Date(),
+      redemption_code: '',
+      image_url: '',
+      color: deal?.color || '',
+      is_active: true,
+      is_featured: false,
+      is_new: false,
+    },
+  });
+
+  useEffect(() => {
+    form.setValues({
       deal_title: deal?.deal_title || '',
       deal_description: deal?.deal_description || '',
       terms: deal?.terms || '',
@@ -29,13 +62,17 @@ export default function Deal() {
       is_active: deal?.is_active ?? true,
       is_featured: deal?.is_featured ?? false,
       is_new: deal?.is_new ?? false,
-    },
-  });
+    });
+  }, [deal]);
 
   const handleSubmit = (values: typeof form.values) => {
     console.log('Form values:', values);
     // TODO: Submit to Supabase
   };
+
+  if (isError || isPending) {
+    return <QueryState isError={isError} isPending={isPending} error={error} />;
+  }
 
   return (
     <>

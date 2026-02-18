@@ -10,45 +10,98 @@ import {
 } from '@mantine/core';
 import { DateInput, TimeInput } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import { useLoaderData } from 'react-router';
+import { useParams } from 'react-router';
+// import type { Business } from '../../types';
+import {
+  getEventById,
+  type EventWithBusiness,
+} from '../../services/events.service';
+import { useQuery } from '@tanstack/react-query';
+import QueryState from '../../components/QueryState';
+import { getBusinesses } from '../../services/businesses.service';
 import type { Business } from '../../types';
+import { useEffect } from 'react';
 
 export default function Event() {
-  const { event, businesses } = useLoaderData();
+  const { id } = useParams();
+  const { isPending, isError, data, error } =
+    useQuery<EventWithBusiness | null>({
+      queryKey: ['event', id],
+      queryFn: () => getEventById(Number(id)),
+    });
+  const { data: businesses } = useQuery({
+    queryKey: ['businesses'],
+    queryFn: getBusinesses,
+  });
+
+  const event = data;
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
-      name: event?.name || '',
-      description: event?.description || '',
-      date: event?.date ? new Date(event.date) : new Date(),
-      start_time: event?.start_time || '',
-      end_time: event?.end_time || '',
-      location_name: event?.location_name || '',
-      address: event?.address || '',
-      latitude: event?.latitude || 0,
-      longitude: event?.longitude || 0,
-      organizer_name: event?.organizer_name || '',
-      business_id: event?.business_id?.toString() || '',
-      price: event?.price || '',
-      registration_url: event?.registration_url || '',
-      image_url: event?.image_url || '',
-      color: event?.color || '',
-      is_active: event?.is_active ?? true,
-      is_featured: event?.is_featured ?? false,
-      is_recurring: event?.is_recurring ?? false,
-      is_cancelled: event?.is_cancelled ?? false,
-      recurrence_pattern: event?.recurrence_pattern || '',
-      recurrence_day: event?.recurrence_day || '',
-      recurrence_end_date: event?.recurrence_end_date
-        ? new Date(event.recurrence_end_date)
-        : null,
+      name: '',
+      description: '',
+      date: new Date(),
+      start_time: '',
+      end_time: '',
+      location_name: '',
+      address: '',
+      latitude: 0,
+      longitude: 0,
+      organizer_name: '',
+      business_id: '',
+      price: '',
+      registration_url: '',
+      image_url: '',
+      color: '',
+      is_active: true,
+      is_featured: false,
+      is_recurring: false,
+      is_cancelled: false,
+      recurrence_pattern: '',
+      recurrence_day: '',
+      recurrence_end_date: new Date(),
     },
   });
+
+  useEffect(() => {
+    if (event) {
+      form.setValues({
+        name: event?.name || '',
+        description: event?.description || '',
+        date: event?.date ? new Date(event.date) : new Date(),
+        start_time: event?.start_time || '',
+        end_time: event?.end_time || '',
+        location_name: event?.location_name || '',
+        address: event?.address || '',
+        latitude: event?.latitude || 0,
+        longitude: event?.longitude || 0,
+        organizer_name: event?.organizer_name || '',
+        business_id: event?.business_id?.toString() || '',
+        price: event?.price || '',
+        registration_url: event?.registration_url || '',
+        image_url: event?.image_url || '',
+        color: event?.color || '',
+        is_active: event?.is_active ?? true,
+        is_featured: event?.is_featured ?? false,
+        is_recurring: event?.is_recurring ?? false,
+        is_cancelled: event?.is_cancelled ?? false,
+        recurrence_pattern: event?.recurrence_pattern || '',
+        recurrence_day: event?.recurrence_day || '',
+        recurrence_end_date: event?.recurrence_end_date
+          ? new Date(event.recurrence_end_date)
+          : undefined,
+      });
+    }
+  }, [event]);
 
   const handleSubmit = (values: typeof form.values) => {
     console.log('Form values:', values);
     // TODO: Submit to Supabase
   };
+
+  if (isError || isPending) {
+    return <QueryState isError={isError} isPending={isPending} error={error} />;
+  }
 
   return (
     <>

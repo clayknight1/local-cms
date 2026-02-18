@@ -2,23 +2,22 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@mantine/core/styles.css';
 import 'mantine-datatable/styles.layer.css';
+import '@mantine/notifications/styles.css';
 import './index.css';
 import App from './App.tsx';
 import { MantineProvider } from '@mantine/core';
 import { createBrowserRouter, redirect, RouterProvider } from 'react-router';
-import Events from './pages/events/events.tsx';
-import Restaurants from './pages/restaurants/restaurants.tsx';
-import Deals from './pages/deals/deals.tsx';
-import {
-  getBusinessById,
-  getRestaurants,
-} from './services/restaurants.service.ts';
-import Restaurant from './pages/restaurant/restaurant.tsx';
-import { getDeals } from './services/deals.service.ts';
-import { getEventById, getEvents } from './services/events.service.ts';
-import Event from './pages/event/event.tsx';
-import Login from './pages/login/login.tsx';
+import Events from './pages/events/Events.tsx';
+import Restaurants from './pages/restaurants/Restaurants.tsx';
+import Deals from './pages/deals/Deals.tsx';
+import Restaurant from './pages/restaurants/Restaurant.tsx';
+import Event from './pages/events/Event.tsx';
+import Login from './pages/login/Login.tsx';
 import { supabase } from './lib/supabase.ts';
+import { Notifications } from '@mantine/notifications';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Deal from './pages/deals/Deal.tsx';
+import NewRestaurant from './pages/restaurants/NewRestaurant.tsx';
 
 const router = createBrowserRouter([
   {
@@ -28,61 +27,60 @@ const router = createBrowserRouter([
   {
     path: '/',
     Component: App,
-    loader: async () => {
+    loader: async ({ request }) => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
         throw redirect('/login');
-        return null;
       }
+      const url = new URL(request.url);
+      if (url.pathname === '/') {
+        throw redirect('/events');
+      }
+      return null;
     },
     children: [
       {
-        index: true,
+        path: 'events',
         Component: Events,
-        loader: async () => {
-          return { events: await getEvents() };
-        },
       },
       {
         path: 'events/:id',
         Component: Event,
-        loader: async ({ params }) => {
-          const id = params.id!;
-          return { event: await getEventById(Number(id)) };
-        },
       },
       {
         path: 'restaurants',
-        loader: async () => {
-          return { restaurants: await getRestaurants() };
-        },
         Component: Restaurants,
       },
       {
         path: 'restaurants/:id',
-        loader: async ({ params }) => {
-          const id = params.id!;
-          return { restaurant: await getBusinessById(Number(id)) };
-        },
         Component: Restaurant,
+      },
+      {
+        path: 'restaurants/new',
+        Component: NewRestaurant,
       },
       {
         path: 'deals',
         Component: Deals,
-        loader: async () => {
-          return { deals: await getDeals() };
-        },
+      },
+      {
+        path: 'deals/:id',
+        Component: Deal,
       },
     ],
   },
 ]);
+const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MantineProvider>
-      <RouterProvider router={router} />
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider>
+        <RouterProvider router={router} />
+        <Notifications />
+      </MantineProvider>
+    </QueryClientProvider>
   </StrictMode>,
 );

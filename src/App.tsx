@@ -29,9 +29,24 @@ function App() {
         <Title style={{ color: '#ffffff' }} order={4} mb='xl'>
           Local CMS
         </Title>
-        <NavLink component={Link} to='/' label='Events' />
-        <NavLink component={Link} to='/restaurants' label='Restaurants' />
-        <NavLink component={Link} to='/deals' label='Deals' />
+        <NavLink
+          component={Link}
+          to='/events'
+          label='Events'
+          active={location.pathname.startsWith('/events')}
+        />
+        <NavLink
+          component={Link}
+          to='/restaurants'
+          label='Restaurants'
+          active={location.pathname.startsWith('/restaurants')}
+        />
+        <NavLink
+          component={Link}
+          to='/deals'
+          label='Deals'
+          active={location.pathname.startsWith('/deals')}
+        />
         <Button onClick={logOut}>Log Out</Button>
       </AppShell.Navbar>
       <AppShell.Main>

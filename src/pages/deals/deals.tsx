@@ -1,12 +1,24 @@
-import { Link, useLoaderData } from 'react-router';
+import { Link } from 'react-router';
 import type { Deal } from '../../types';
-import { Button, Table } from '@mantine/core';
+import { Button, Container, Group, Table, Title } from '@mantine/core';
+import { getDeals } from '../../services/deals.service';
+import { useQuery } from '@tanstack/react-query';
+import QueryState from '../../components/QueryState';
 
 export default function Deals() {
-  const { deals } = useLoaderData();
-  console.log('DEALS', deals);
+  const {
+    isPending,
+    isError,
+    data: deals,
+    error,
+  } = useQuery({ queryKey: ['deals'], queryFn: getDeals });
 
-  const dealsData = deals.map((deal: Deal) => {
+  if (isError || isPending) {
+    return <QueryState isError={isError} isPending={isPending} error={error} />;
+  }
+  async function handleAddDeal(): Promise<void> {}
+
+  const dealsData = deals?.map((deal: Deal) => {
     return (
       <Table.Tr key={deal.id}>
         <Table.Td>{deal.deal_title}</Table.Td>
@@ -14,7 +26,7 @@ export default function Deals() {
         <Table.Td>{deal.expires_at}</Table.Td>
         <Table.Td>{deal.category_id}</Table.Td>
         <Table.Td>
-          <Button size='xs' component={Link} to={`/restaurants/${deal.id}`}>
+          <Button size='xs' component={Link} to={`/deals/${deal.id}`}>
             Edit
           </Button>
           <Button size='xs' color='red'>
@@ -25,8 +37,14 @@ export default function Deals() {
     );
   });
   return (
-    <>
-      <h1>Deals</h1>
+    <Container size='xl' py='md'>
+      <Group justify='space-between' mb='lg'>
+        <Title order={1}>{deals?.length} Deals</Title>
+
+        <Button leftSection={<span>+</span>} onClick={handleAddDeal}>
+          Add Deal
+        </Button>
+      </Group>
       <Table>
         <Table.Thead>
           <Table.Tr>
@@ -35,6 +53,6 @@ export default function Deals() {
         </Table.Thead>
         <Table.Tbody>{dealsData}</Table.Tbody>
       </Table>
-    </>
+    </Container>
   );
 }
