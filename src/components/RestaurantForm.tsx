@@ -5,12 +5,15 @@ import {
   Button,
   Group,
   NumberInput,
+  Select,
   Stack,
   Switch,
   Textarea,
   TextInput,
 } from '@mantine/core';
 import type { Business } from '../types';
+import { useQuery } from '@tanstack/react-query';
+import { getBusinessTypes } from '../services/businesses.service';
 
 export type RestaurantFormValues = {
   name: string;
@@ -22,7 +25,7 @@ export type RestaurantFormValues = {
   phone: string;
   email: string;
   website_url: string;
-  business_type: string;
+  business_type_id: string;
   price_range: string;
   latitude: number;
   longitude: number;
@@ -46,6 +49,10 @@ export default function RestaurantForm({
   error = null,
   onSubmit,
 }: RestaurantFormProps) {
+  const { data: businessTypes } = useQuery({
+    queryKey: ['businessTypes'],
+    queryFn: getBusinessTypes,
+  });
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
@@ -58,7 +65,7 @@ export default function RestaurantForm({
       phone: '',
       email: '',
       website_url: '',
-      business_type: '',
+      business_type_id: '',
       price_range: '',
       latitude: 0,
       longitude: 0,
@@ -80,7 +87,7 @@ export default function RestaurantForm({
         phone: restaurant?.phone || '',
         email: restaurant?.email || '',
         website_url: restaurant?.website_url || '',
-        business_type: restaurant?.business_type || '',
+        business_type_id: restaurant.business_type_id?.toString() || '',
         price_range: restaurant?.price_range || '',
         latitude: restaurant?.latitude || 0,
         longitude: restaurant?.longitude || 0,
@@ -116,11 +123,29 @@ export default function RestaurantForm({
             minRows={3}
           />
 
-          <TextInput
+          {/* <TextInput
             {...form.getInputProps('business_type')}
             key={form.key('business_type')}
             label='Business Type'
             placeholder='e.g., Restaurant, Bar, Cafe'
+          /> */}
+          <Select
+            {...form.getInputProps('business_type_id')}
+            key={form.key('business_type_id')}
+            label='Business Type'
+            data={businessTypes?.map((type) => ({
+              value: type.id.toString(),
+              label: type.name,
+            }))}
+            searchable
+            // creatable  // ← Lets users add new types!
+            // getCreateLabel={(query) => `+ Add "${query}"`}
+            // onCreate={(query) => {
+            //   // Create new business type
+            //   const newType = { name: query, tenant_id: 1 };
+            //   addBusinessType(newType);
+            //   return item;
+            // }}
           />
 
           <TextInput

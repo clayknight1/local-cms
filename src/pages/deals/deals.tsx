@@ -1,7 +1,6 @@
 import { Link } from 'react-router';
-import type { Deal } from '../../types';
-import { Button, Container, Group, Table, Title } from '@mantine/core';
-import { getDeals } from '../../services/deals.service';
+import { Badge, Button, Container, Group, Table, Title } from '@mantine/core';
+import { getDeals, type DealWithBusiness } from '../../services/deals.service';
 import { useQuery } from '@tanstack/react-query';
 import QueryState from '../../components/QueryState';
 
@@ -16,32 +15,43 @@ export default function Deals() {
   if (isError || isPending) {
     return <QueryState isError={isError} isPending={isPending} error={error} />;
   }
-  async function handleAddDeal(): Promise<void> {}
 
-  const dealsData = deals?.map((deal: Deal) => {
+  const dealsData = deals?.map((deal: DealWithBusiness) => {
     return (
       <Table.Tr key={deal.id}>
         <Table.Td>{deal.deal_title}</Table.Td>
-        <Table.Td>{deal.is_active}</Table.Td>
-        <Table.Td>{deal.expires_at}</Table.Td>
-        <Table.Td>{deal.category_id}</Table.Td>
         <Table.Td>
-          <Button size='xs' component={Link} to={`/deals/${deal.id}`}>
-            Edit
-          </Button>
-          <Button size='xs' color='red'>
-            Delete
-          </Button>
+          <Badge color={deal.is_active ? 'green' : 'gray'}>
+            {deal.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+        </Table.Td>
+        <Table.Td>
+          {new Date(deal.expires_at).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })}
+        </Table.Td>
+        <Table.Td>{deal.businesses?.name || 'N/A'}</Table.Td>
+        <Table.Td>
+          <Group gap='xs'>
+            <Button size='xs' component={Link} to={`/deals/${deal.id}`}>
+              Edit
+            </Button>
+            <Button size='xs' color='red'>
+              Delete
+            </Button>
+          </Group>
         </Table.Td>
       </Table.Tr>
     );
   });
+
   return (
     <Container size='xl' py='md'>
       <Group justify='space-between' mb='lg'>
         <Title order={1}>{deals?.length} Deals</Title>
-
-        <Button leftSection={<span>+</span>} onClick={handleAddDeal}>
+        <Button leftSection={<span>+</span>} component={Link} to='/deals/new'>
           Add Deal
         </Button>
       </Group>
@@ -49,6 +59,10 @@ export default function Deals() {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Title</Table.Th>
+            <Table.Th>Status</Table.Th>
+            <Table.Th>Expires</Table.Th>
+            <Table.Th>Business</Table.Th>
+            <Table.Th>Actions</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>{dealsData}</Table.Tbody>

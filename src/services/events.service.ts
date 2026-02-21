@@ -1,13 +1,12 @@
 import { supabase } from '../lib/supabase';
-import type { Event } from '../types';
+import type { Event, EventInsert, EventUpdate } from '../types';
 
-export async function getEvents(): Promise<Event[] | null> {
-  console.time('getEvents API call');
+export async function getEvents(): Promise<EventWithBusiness[] | null> {
   const { data, error } = await supabase
     .from('events')
     .select(`*, businesses(id, name)`)
-    .eq('tenant_id', 1);
-  console.timeEnd('getEvents API call');
+    .eq('tenant_id', 1)
+    .order('date', { ascending: true });
 
   if (error) {
     console.error(error);
@@ -44,5 +43,37 @@ export async function getEventById(
     return null;
   }
 
+  return data;
+}
+
+export async function addEvent(event: EventInsert): Promise<Event> {
+  const { data, error } = await supabase
+    .from('events')
+    .insert({ ...event, tenant_id: 1 })
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error.message);
+    throw error;
+  }
+  return data;
+}
+
+export async function updateEvent(
+  id: number,
+  event: EventUpdate,
+): Promise<Event> {
+  const { data, error } = await supabase
+    .from('events')
+    .update(event)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error.message);
+    throw error;
+  }
   return data;
 }

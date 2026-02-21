@@ -39,12 +39,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_types: {
+        Row: {
+          created_at: string | null
+          id: number
+          name: string
+          tenant_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          name: string
+          tenant_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          name?: string
+          tenant_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "business_types_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       businesses: {
         Row: {
           address: string
           archived_at: string | null
           archived_reason: string | null
           business_type: string | null
+          business_type_id: number | null
           city: string | null
           cover_image_url: string | null
           created_at: string | null
@@ -76,6 +106,7 @@ export type Database = {
           archived_at?: string | null
           archived_reason?: string | null
           business_type?: string | null
+          business_type_id?: number | null
           city?: string | null
           cover_image_url?: string | null
           created_at?: string | null
@@ -107,6 +138,7 @@ export type Database = {
           archived_at?: string | null
           archived_reason?: string | null
           business_type?: string | null
+          business_type_id?: number | null
           city?: string | null
           cover_image_url?: string | null
           created_at?: string | null
@@ -134,6 +166,13 @@ export type Database = {
           zip?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "businesses_business_type_id_fkey"
+            columns: ["business_type_id"]
+            isOneToOne: false
+            referencedRelation: "business_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "businesses_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -486,6 +525,35 @@ export type Database = {
           },
           {
             foreignKeyName: "pickup_locations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          tenant_id: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          tenant_id: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tenant_id?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"

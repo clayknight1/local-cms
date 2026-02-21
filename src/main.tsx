@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@mantine/core/styles.css';
-import 'mantine-datatable/styles.layer.css';
+import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
 import './index.css';
 import App from './App.tsx';
@@ -18,6 +18,8 @@ import { Notifications } from '@mantine/notifications';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Deal from './pages/deals/Deal.tsx';
 import NewRestaurant from './pages/restaurants/NewRestaurant.tsx';
+import NewEvent from './pages/events/NewEvent.tsx';
+import NewDeal from './pages/deals/NewDeal.tsx';
 
 const router = createBrowserRouter([
   {
@@ -50,6 +52,10 @@ const router = createBrowserRouter([
         Component: Event,
       },
       {
+        path: 'events/new',
+        Component: NewEvent,
+      },
+      {
         path: 'restaurants',
         Component: Restaurants,
       },
@@ -68,6 +74,10 @@ const router = createBrowserRouter([
       {
         path: 'deals/:id',
         Component: Deal,
+      },
+      {
+        path: 'deals/new',
+        Component: NewDeal,
       },
     ],
   },

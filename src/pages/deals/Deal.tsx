@@ -1,33 +1,27 @@
-import {
-  TextInput,
-  Textarea,
-  Switch,
-  Button,
-  Group,
-  Stack,
-  Select,
-} from '@mantine/core';
-import { DateTimePicker } from '@mantine/dates';
 import { useForm } from '@mantine/form';
-import type { Business } from '../../types';
 import { useQuery } from '@tanstack/react-query';
-import { getDealById } from '../../services/deals.service';
-import { getBusinesses } from '../../services/businesses.service';
+import { getDealById, updateDeal } from '../../services/deals.service';
 import { useEffect } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import QueryState from '../../components/QueryState';
+import DealForm, { type DealFormValues } from '../../components/DealForm';
+import type { DealInsert, DealUpdate } from '../../types';
+import { useMutationWithNotifications } from '../../hooks/useMutationWithNotifications';
 
 export default function Deal() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const {
     isPending,
     isError,
     data: deal,
     error,
   } = useQuery({ queryKey: ['deal'], queryFn: () => getDealById(Number(id)) });
-  const { data: businesses } = useQuery({
-    queryKey: ['businesses'],
-    queryFn: getBusinesses,
+  const mutation = useMutationWithNotifications({
+    mutationFn: (data: DealUpdate) => updateDeal(Number(id), data),
+    invalidateKeys: [['deals'], ['deal', id!]],
+    successTitle: 'Deal Updated!',
+    onSuccess: () => navigate('/deals'),
   });
 
   const form = useForm({
@@ -65,10 +59,16 @@ export default function Deal() {
     });
   }, [deal]);
 
-  const handleSubmit = (values: typeof form.values) => {
-    console.log('Form values:', values);
-    // TODO: Submit to Supabase
-  };
+  async function handleSubmit(values: DealFormValues) {
+    const dealData: DealInsert = {
+      ...values,
+      business_id: Number(values.business_id),
+      starts_at: values.starts_at || null,
+      expires_at: values.expires_at!,
+    };
+
+    mutation.mutate(dealData);
+  }
 
   if (isError || isPending) {
     return <QueryState isError={isError} isPending={isPending} error={error} />;
@@ -76,106 +76,13 @@ export default function Deal() {
 
   return (
     <>
-      <h1>{deal?.deal_title || 'New Deal'}</h1>
-      <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Stack gap='md'>
-          <TextInput
-            {...form.getInputProps('deal_title')}
-            key={form.key('deal_title')}
-            label='Deal Title'
-            placeholder='50% Off Happy Hour'
-            required
-          />
-
-          <Textarea
-            {...form.getInputProps('deal_description')}
-            key={form.key('deal_description')}
-            label='Description'
-            placeholder='Describe the deal'
-            minRows={3}
-          />
-
-          <Select
-            {...form.getInputProps('business_id')}
-            key={form.key('business_id')}
-            label='Business'
-            placeholder='Select a business'
-            data={
-              businesses?.map((business: Business) => ({
-                value: business.id.toString(),
-                label: business.name,
-              })) || []
-            }
-          />
-
-          <Group grow>
-            <DateTimePicker
-              {...form.getInputProps('starts_at')}
-              key={form.key('starts_at')}
-              label='Start Date'
-              placeholder='Pick start date and time'
-            />
-            <DateTimePicker
-              {...form.getInputProps('expires_at')}
-              key={form.key('expires_at')}
-              label='Expiration Date'
-              placeholder='Pick expiration date and time'
-              required
-            />
-          </Group>
-
-          <TextInput
-            {...form.getInputProps('redemption_code')}
-            key={form.key('redemption_code')}
-            label='Redemption Code'
-            placeholder='SAVE50'
-          />
-
-          <Textarea
-            {...form.getInputProps('terms')}
-            key={form.key('terms')}
-            label='Terms & Conditions'
-            placeholder='Valid on weekdays only, one per customer, etc.'
-            minRows={2}
-          />
-
-          <TextInput
-            {...form.getInputProps('image_url')}
-            key={form.key('image_url')}
-            label='Image URL'
-            placeholder='https://example.com/deal-image.jpg'
-          />
-
-          <TextInput
-            {...form.getInputProps('color')}
-            key={form.key('color')}
-            label='Color'
-            placeholder='#FF6B35'
-          />
-
-          <Group>
-            <Switch
-              {...form.getInputProps('is_active', { type: 'checkbox' })}
-              key={form.key('is_active')}
-              label='Active'
-            />
-            <Switch
-              {...form.getInputProps('is_featured', { type: 'checkbox' })}
-              key={form.key('is_featured')}
-              label='Featured'
-            />
-            <Switch
-              {...form.getInputProps('is_new', { type: 'checkbox' })}
-              key={form.key('is_new')}
-              label='New'
-            />
-          </Group>
-
-          <Group justify='flex-end' mt='md'>
-            <Button type='submit'>Save</Button>
-          </Group>
-        </Stack>
-      </form>
+      <DealForm
+        deal={deal}
+        isError={isError}
+        isPending={isPending}
+        error={error}
+        onSubmit={handleSubmit}
+      ></DealForm>
     </>
   );
 }
