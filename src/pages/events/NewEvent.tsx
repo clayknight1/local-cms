@@ -4,9 +4,14 @@ import { addEvent } from '../../services/events.service';
 import type { EventInsert } from '../../types';
 import { useNavigate } from 'react-router';
 import { useMutationWithNotifications } from '../../hooks/useMutationWithNotifications';
+import { useState } from 'react';
+import ImageUpload from '../../components/ImageUpload';
+import { uploadImage } from '../../services/storage.service';
+import { notifications } from '@mantine/notifications';
 
 export default function NewEvent() {
   const navigate = useNavigate();
+  const [imageUpload, setImageUpload] = useState<File | null>(null);
   const mutation = useMutationWithNotifications({
     mutationFn: (data: EventInsert) => addEvent(data),
     invalidateKeys: [['events']],
@@ -15,8 +20,24 @@ export default function NewEvent() {
   });
 
   async function handleSubmit(values: EventFormValues): Promise<void> {
+    let imageUrl = values.image_url;
+
+    if (imageUpload) {
+      try {
+        imageUrl = await uploadImage(imageUpload, 'events');
+      } catch {
+        notifications.show({
+          title: 'Error',
+          message: 'Could not upload image. Please try again',
+          color: 'red',
+        });
+        return;
+      }
+    }
+
     const eventData: EventInsert = {
       ...values,
+      image_url: imageUrl,
       business_id: values.business_id ? Number(values.business_id) : null,
       date: values.date, // Date object to string
       recurrence_end_date: values.recurrence_end_date
@@ -28,7 +49,8 @@ export default function NewEvent() {
 
   return (
     <>
-      <EventForm onSubmit={handleSubmit}></EventForm>
+      <EventForm onSubmit={handleSubmit} />
+      <ImageUpload label='Cover Image' onFileSelect={setImageUpload} />
     </>
   );
 }

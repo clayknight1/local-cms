@@ -1,16 +1,20 @@
 import { useForm } from '@mantine/form';
 import { useQuery } from '@tanstack/react-query';
 import { getDealById, updateDeal } from '../../services/deals.service';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import QueryState from '../../components/QueryState';
 import DealForm, { type DealFormValues } from '../../components/DealForm';
 import type { DealInsert, DealUpdate } from '../../types';
 import { useMutationWithNotifications } from '../../hooks/useMutationWithNotifications';
+import ImageUpload from '../../components/ImageUpload';
+import { uploadImage } from '../../services/storage.service';
+import { notifications } from '@mantine/notifications';
 
 export default function Deal() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [imageUpload, setImageUpload] = useState<File | null>(null);
   const {
     isPending,
     isError,
@@ -60,8 +64,24 @@ export default function Deal() {
   }, [deal]);
 
   async function handleSubmit(values: DealFormValues) {
+    let imageUrl = values.image_url;
+
+    if (imageUpload) {
+      try {
+        imageUrl = await uploadImage(imageUpload, 'restaurants');
+      } catch {
+        notifications.show({
+          title: 'Error',
+          message: 'Could not upload image. Please try again',
+          color: 'red',
+        });
+        return;
+      }
+    }
+
     const dealData: DealInsert = {
       ...values,
+      image_url: imageUrl,
       business_id: Number(values.business_id),
       starts_at: values.starts_at || null,
       expires_at: values.expires_at!,
@@ -83,6 +103,12 @@ export default function Deal() {
         error={error}
         onSubmit={handleSubmit}
       ></DealForm>
+      <ImageUpload
+        key={deal?.id}
+        label='Cover Image - Will fallback to business image if image not added'
+        existingImageUrl={deal?.image_url}
+        onFileSelect={setImageUpload}
+      ></ImageUpload>
     </>
   );
 }

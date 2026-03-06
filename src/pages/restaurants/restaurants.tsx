@@ -2,8 +2,8 @@ import { Button, Container, Group, Table, Title } from '@mantine/core';
 import { Link, useNavigate } from 'react-router';
 import type { Business } from '../../types';
 import { useQuery } from '@tanstack/react-query';
-import { getRestaurants } from '../../services/restaurants.service';
 import QueryState from '../../components/QueryState';
+import { getBusinesses } from '../../services/businesses.service';
 
 export default function Restaurants() {
   const {
@@ -11,7 +11,10 @@ export default function Restaurants() {
     isError,
     data: restaurants,
     error,
-  } = useQuery({ queryKey: ['restaurants'], queryFn: getRestaurants });
+  } = useQuery({
+    queryKey: ['restaurants'],
+    queryFn: () => getBusinesses('food_drink'),
+  });
   const navigate = useNavigate();
 
   if (isError || isPending) {

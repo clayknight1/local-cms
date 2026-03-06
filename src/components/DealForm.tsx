@@ -51,7 +51,7 @@ export default function DealForm({
 }: DealFormProps) {
   const { data: businesses } = useQuery({
     queryKey: ['businesses'],
-    queryFn: getBusinesses,
+    queryFn: () => getBusinesses(),
   });
 
   const form = useForm<DealFormValues>({

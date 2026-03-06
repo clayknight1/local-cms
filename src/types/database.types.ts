@@ -12,47 +12,25 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       business_types: {
         Row: {
+          category: string | null
           created_at: string | null
           id: number
           name: string
           tenant_id: number | null
         }
         Insert: {
+          category?: string | null
           created_at?: string | null
           id?: number
           name: string
           tenant_id?: number | null
         }
         Update: {
+          category?: string | null
           created_at?: string | null
           id?: number
           name?: string
@@ -81,6 +59,8 @@ export type Database = {
           cuisine: string[] | null
           description: string | null
           email: string | null
+          featured_end: string | null
+          featured_start: string | null
           features: string[] | null
           hours: Json | null
           id: number
@@ -113,6 +93,8 @@ export type Database = {
           cuisine?: string[] | null
           description?: string | null
           email?: string | null
+          featured_end?: string | null
+          featured_start?: string | null
           features?: string[] | null
           hours?: Json | null
           id?: number
@@ -145,6 +127,8 @@ export type Database = {
           cuisine?: string[] | null
           description?: string | null
           email?: string | null
+          featured_end?: string | null
+          featured_start?: string | null
           features?: string[] | null
           hours?: Json | null
           id?: number
@@ -239,7 +223,7 @@ export type Database = {
         Row: {
           archived_at: string | null
           archived_reason: string | null
-          business_id: number | null
+          business_id: number
           category_id: number | null
           color: string | null
           created_at: string | null
@@ -261,7 +245,7 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           archived_reason?: string | null
-          business_id?: number | null
+          business_id: number
           category_id?: number | null
           color?: string | null
           created_at?: string | null
@@ -283,7 +267,7 @@ export type Database = {
         Update: {
           archived_at?: string | null
           archived_reason?: string | null
-          business_id?: number | null
+          business_id?: number
           category_id?: number | null
           color?: string | null
           created_at?: string | null
@@ -1761,9 +1745,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

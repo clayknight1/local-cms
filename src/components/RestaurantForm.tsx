@@ -3,17 +3,35 @@ import { useEffect } from 'react';
 import QueryState from './QueryState';
 import {
   Button,
+  Chip,
+  Divider,
   Group,
   NumberInput,
   Select,
   Stack,
   Switch,
+  Text,
   Textarea,
   TextInput,
 } from '@mantine/core';
 import type { Business } from '../types';
 import { useQuery } from '@tanstack/react-query';
 import { getBusinessTypes } from '../services/businesses.service';
+import { CUISINES } from '../constants/cuisines';
+import { DateInput, TimeInput } from '@mantine/dates';
+import { FEATURES } from '../constants/features';
+import { parseHours, transformHours } from '../utils/hours';
+import ImageUpload from './ImageUpload';
+
+const DAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 export type RestaurantFormValues = {
   name: string;
@@ -32,6 +50,11 @@ export type RestaurantFormValues = {
   is_active: boolean;
   logo_url: string;
   cover_image_url: string;
+  cuisine: string[];
+  features: string[];
+  hours: Record<string, string>;
+  featured_start: string | null;
+  featured_end: string | null;
 };
 
 type RestaurantFormProps = {
@@ -40,6 +63,8 @@ type RestaurantFormProps = {
   isPending?: boolean;
   error?: Error | null;
   onSubmit: (values: RestaurantFormValues) => void;
+  onFileSelect: (file: File | null) => void;
+  existingImageUrl?: string | null;
 };
 
 export default function RestaurantForm({
@@ -48,11 +73,14 @@ export default function RestaurantForm({
   isPending = false,
   error = null,
   onSubmit,
+  onFileSelect,
+  existingImageUrl,
 }: RestaurantFormProps) {
   const { data: businessTypes } = useQuery({
     queryKey: ['businessTypes'],
     queryFn: getBusinessTypes,
   });
+
   const form = useForm({
     mode: 'uncontrolled',
     initialValues: {
@@ -71,7 +99,12 @@ export default function RestaurantForm({
       longitude: 0,
       is_active: true,
       logo_url: '',
+      featured_start: null as string | null,
+      featured_end: null as string | null,
       cover_image_url: '',
+      cuisine: [] as string[],
+      features: [] as string[],
+      hours: {} as Record<string, { open: string; close: string } | null>,
     },
   });
 
@@ -93,7 +126,14 @@ export default function RestaurantForm({
         longitude: restaurant?.longitude || 0,
         is_active: restaurant?.is_active ?? true,
         logo_url: restaurant?.logo_url || '',
+        featured_start: restaurant?.featured_start ?? null,
+        featured_end: restaurant?.featured_end ?? null,
         cover_image_url: restaurant?.cover_image_url || '',
+        cuisine: restaurant.cuisine ?? [],
+        features: restaurant.features ?? [],
+        hours: restaurant.hours
+          ? parseHours(restaurant.hours as Record<string, string>)
+          : {},
       });
     }
   }, [restaurant]);
@@ -105,7 +145,11 @@ export default function RestaurantForm({
   return (
     <>
       <h1>{restaurant?.name || 'New Business'}</h1>
-      <form onSubmit={form.onSubmit(onSubmit)}>
+      <form
+        onSubmit={form.onSubmit((values) =>
+          onSubmit({ ...values, hours: transformHours(values.hours) }),
+        )}
+      >
         <Stack gap='md'>
           <TextInput
             {...form.getInputProps('name')}
@@ -226,6 +270,102 @@ export default function RestaurantForm({
             placeholder='e.g., $, $$, $$$'
           />
 
+          <Divider label='Cuisine Types' labelPosition='left' />
+          <Chip.Group
+            multiple
+            value={form.getValues().cuisine}
+            onChange={(value) => form.setFieldValue('cuisine', value)}
+          >
+            <Group gap='xs'>
+              {CUISINES.map((c) => (
+                <Chip key={c.id} value={c.type}>
+                  {c.type}
+                </Chip>
+              ))}
+            </Group>
+          </Chip.Group>
+
+          <Divider label='Features' labelPosition='left' />
+          <Chip.Group
+            multiple
+            value={form.getValues().features}
+            onChange={(value) => form.setFieldValue('features', value)}
+          >
+            <Group gap='xs'>
+              {FEATURES.map((feature) => (
+                <Chip key={feature.value} value={feature.value}>
+                  {feature.label}
+                </Chip>
+              ))}
+            </Group>
+          </Chip.Group>
+
+          <Divider label='Business Hours' labelPosition='left' />
+          <Stack gap='xs'>
+            {DAYS.map((day) => {
+              const key = day.toLowerCase();
+              const dayHours = form.getValues().hours?.[key];
+              return (
+                <Group key={day} align='center'>
+                  <Switch
+                    label={day}
+                    w={130}
+                    checked={dayHours !== null && dayHours !== undefined}
+                    onChange={(e) =>
+                      form.setFieldValue(
+                        `hours.${key}`,
+                        e.currentTarget.checked
+                          ? { open: '09:00', close: '21:00' }
+                          : null,
+                      )
+                    }
+                  />
+                  <TimeInput
+                    disabled={!dayHours}
+                    value={dayHours?.open ?? ''}
+                    onChange={(e) =>
+                      form.setFieldValue(
+                        `hours.${key}.open`,
+                        e.currentTarget.value,
+                      )
+                    }
+                  />
+                  <Text size='sm' c='dimmed'>
+                    to
+                  </Text>
+                  <TimeInput
+                    disabled={!dayHours}
+                    value={dayHours?.close ?? ''}
+                    onChange={(e) =>
+                      form.setFieldValue(
+                        `hours.${key}.close`,
+                        e.currentTarget.value,
+                      )
+                    }
+                  />
+                </Group>
+              );
+            })}
+          </Stack>
+
+          <Divider label='Featured Listing' labelPosition='left' />
+          <Group grow>
+            <DateInput
+              {...form.getInputProps('featured_start')}
+              key={form.key('featured_start')}
+              label='Featured Start'
+              placeholder='Start date'
+              clearable
+            />
+            <DateInput
+              {...form.getInputProps('featured_end')}
+              key={form.key('featured_end')}
+              label='Featured End'
+              placeholder='End date'
+              clearable
+            />
+          </Group>
+
           <TextInput
             {...form.getInputProps('logo_url')}
             key={form.key('logo_url')}
@@ -245,6 +385,13 @@ export default function RestaurantForm({
             key={form.key('is_active')}
             label='Active'
           />
+
+          <ImageUpload
+            key={restaurant?.id}
+            label='Cover Image'
+            existingImageUrl={existingImageUrl}
+            onFileSelect={onFileSelect}
+          ></ImageUpload>
 
           <Group justify='flex-end' mt='md'>
             <Button type='submit' disabled={!form.isDirty()}>

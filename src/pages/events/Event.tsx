@@ -10,9 +10,14 @@ import { getBusinesses } from '../../services/businesses.service';
 import EventForm, { type EventFormValues } from '../../components/EventForm';
 import type { EventUpdate } from '../../types';
 import { useMutationWithNotifications } from '../../hooks/useMutationWithNotifications';
+import ImageUpload from '../../components/ImageUpload';
+import { useState } from 'react';
+import { uploadImage } from '../../services/storage.service';
+import { notifications } from '@mantine/notifications';
 
 export default function Event() {
   const { id } = useParams();
+  const [imageUpload, setImageUpload] = useState<File | null>(null);
   const navigate = useNavigate();
   const {
     isPending,
@@ -26,7 +31,7 @@ export default function Event() {
 
   const { data: businesses } = useQuery({
     queryKey: ['businesses'],
-    queryFn: getBusinesses,
+    queryFn: () => getBusinesses(),
   });
 
   const mutation = useMutationWithNotifications({
@@ -37,8 +42,24 @@ export default function Event() {
   });
 
   async function handleSubmit(values: EventFormValues): Promise<void> {
+    let imageUrl = values.image_url;
+
+    if (imageUpload) {
+      try {
+        imageUrl = await uploadImage(imageUpload, 'events');
+      } catch {
+        notifications.show({
+          title: 'Error',
+          message: 'Could not upload image. Please try again',
+          color: 'red',
+        });
+        return;
+      }
+    }
+
     const eventData: EventUpdate = {
       ...values,
+      image_url: imageUrl,
       business_id: values.business_id ? Number(values.business_id) : null,
       date: values.date,
       recurrence_end_date: values.recurrence_end_date
@@ -62,7 +83,13 @@ export default function Event() {
         isPending={isPending}
         error={error}
         onSubmit={handleSubmit}
-      ></EventForm>
+      />
+      <ImageUpload
+        key={event?.id}
+        label='Cover Image'
+        existingImageUrl={event?.image_url}
+        onFileSelect={setImageUpload}
+      ></ImageUpload>
     </>
   );
 }
